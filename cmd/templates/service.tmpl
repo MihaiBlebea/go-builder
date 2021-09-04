@@ -1,0 +1,13 @@
+package {{ .PackageName }}
+
+type service struct {
+	{{ .RepoVarName }} *{{ .RepoName }}
+}
+
+type Service interface {
+	
+}
+
+func NewService({{ .RepoVarName }} *{{ .RepoName }}) Service {
+	return &service{ {{ .RepoVarName }} }
+}

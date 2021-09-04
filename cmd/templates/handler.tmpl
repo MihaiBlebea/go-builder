@@ -1,0 +1,59 @@
+package {{ .PackageName }}
+
+import (
+	"encoding/json"
+	"errors"
+	"net/http"
+)
+
+type {{ .HandlerName }}Request struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type {{ .HandlerName }}Response struct {
+	ID      int    `json:"id,omitempty"`
+	Token   string `json:"token"`
+	Success bool   `json:"success"`
+	Message string `json:"message,omitempty"`
+}
+
+func {{ .HandlerName }}Handler(s Service) http.Handler {
+	validate := func(r *http.Request) (*{{ .HandlerName }}Request, error) {
+		request := {{ .HandlerName }}Request{}
+
+		err := json.NewDecoder(r.Body).Decode(&request)
+		if err != nil {
+			return &request, err
+		}
+
+		if request.Email == "" {
+			return &request, errors.New("invalid request param email")
+		}
+
+		if request.Password == "" {
+			return &request, errors.New("invalid request param password")
+		}
+
+		return &request, nil
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		response := {{ .HandlerName }}Response{}
+
+		request, err := validate(r)
+		if err != nil {
+			response.Message = err.Error()
+			sendResponse(w, response, http.StatusBadRequest)
+			return
+		}
+
+		// Service goes here
+
+		response.Success = true
+		response.ID = id
+		response.Token = token
+
+		sendResponse(w, response, http.StatusOK)
+	})
+}

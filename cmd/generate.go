@@ -38,17 +38,28 @@ var modelName string
 func init() {
 	rootCmd.AddCommand(startCmd)
 
-	startCmd.Flags().StringVarP(&modelName, "model", "m", "", "Model name")
+	startCmd.Flags().StringVarP(&modelName, "name", "n", "", "Model name")
 }
 
 var startCmd = &cobra.Command{
 	Use:   "gen",
-	Short: "Start the application server.",
-	Long:  "Start the application server.",
+	Short: "Generate a model & repository.",
+	Long:  "Generate a model & repository.",
 	Args: func(cmd *cobra.Command, args []string) error {
+		for _, arg := range args {
+			if !strings.Contains(arg, ":") {
+				return fmt.Errorf("invalid argument format for %s. ex: user_name:string", arg)
+			}
+		}
+
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		err := validateCurrentFolder()
+		if err != nil {
+			return err
+		}
+
 		fields, err := parseArgs(args)
 		if err != nil {
 			return err
@@ -89,6 +100,11 @@ var startCmd = &cobra.Command{
 		}
 
 		err = createFile("repo", fmt.Sprintf("./%s/repo.go", modelName), data)
+		if err != nil {
+			return err
+		}
+
+		err = createFile("service", fmt.Sprintf("./%s/service.go", modelName), data)
 		if err != nil {
 			return err
 		}
@@ -216,4 +232,19 @@ func addExtraFields(fields []ModelField) []ModelField {
 	result, _ := parseArgs(extra)
 
 	return append(fields, result...)
+}
+
+func validateCurrentFolder() error {
+	dir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	if parts := strings.Split(dir, "/"); len(parts) > 0 {
+		if strings.Contains(parts[len(parts)-1], "go") {
+			return nil
+		}
+	}
+
+	return errors.New("run this command only in a go project folder. ex: go-casino")
 }
