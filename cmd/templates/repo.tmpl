@@ -1,0 +1,38 @@
+package {{ .PackageName }}
+
+import (
+	"errors"
+
+	"gorm.io/gorm"
+)
+
+var (
+	ErrNoRecord  error = errors.New("record not found")
+	ErrNoRecords error = errors.New("records not found with filter")
+)
+
+type {{ .RepoName }} struct {
+	conn *gorm.DB
+}
+
+func NewRepo(conn *gorm.DB) *{{ .RepoName }} {
+	return &{{ .RepoName }}{conn}
+}
+
+func (r *{{ .RepoName }}) WithID(id int) (*{{ .ModelName }}, error) {
+	{{ .ModelVarName }} := {{ .ModelName }}{}
+	err := r.conn.Where("id = ?", id).Find(&{{ .ModelVarName }}).Error
+	if err != nil {
+		return &{{ .ModelVarName }}, err
+	}
+
+	if {{ .ModelVarName }}.ID == 0 {
+		return &{{ .ModelVarName }}, ErrNoRecord
+	}
+
+	return &{{ .ModelVarName }}, err
+}
+
+func (r *{{ .RepoName }}) Store({{ .ModelVarName }} *{{ .ModelName }}) error {
+	return r.conn.Create({{ .ModelVarName }}).Error
+}
