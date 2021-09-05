@@ -12,6 +12,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const repoURL string = "https://github.com/MihaiBlebea/go-template"
+
 var projectName string
 
 func init() {
@@ -39,7 +41,7 @@ var projectCmd = &cobra.Command{
 		res := exec.Command(
 			"git",
 			"clone",
-			"https://github.com/MihaiBlebea/go-template",
+			repoURL,
 			folderPath,
 		)
 		err = res.Run()

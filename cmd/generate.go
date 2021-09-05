@@ -92,19 +92,12 @@ var startCmd = &cobra.Command{
 			ExtraFields:  addExtraFields(fields),
 		}
 
-		fmt.Println(addExtraFields(fields))
-
 		err = createFile("model", fmt.Sprintf("./%s/%s.go", modelName, modelName), data)
 		if err != nil {
 			return err
 		}
 
 		err = createFile("repo", fmt.Sprintf("./%s/repo.go", modelName), data)
-		if err != nil {
-			return err
-		}
-
-		err = createFile("service", fmt.Sprintf("./%s/service.go", modelName), data)
 		if err != nil {
 			return err
 		}
