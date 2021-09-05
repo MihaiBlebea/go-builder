@@ -82,8 +82,7 @@ func visit(path string, fi os.FileInfo, err error) error {
 		return nil
 	}
 
-	matched, err := filepath.Match("*.go", fi.Name())
-
+	matched, err := matchFilePatterns(fi.Name(), []string{"*.go", "*.mod"})
 	if err != nil {
 		return err
 	}
@@ -95,7 +94,7 @@ func visit(path string, fi os.FileInfo, err error) error {
 		}
 
 		// Print updated path
-		fmt.Printf("updated path: %s - change go-template with %s\n", path, projectName)
+		printUpdatedFile(path, projectName)
 
 		newContents := strings.Replace(string(read), "go-template", projectName, -1)
 
@@ -106,4 +105,23 @@ func visit(path string, fi os.FileInfo, err error) error {
 	}
 
 	return nil
+}
+
+func matchFilePatterns(fileName string, patterns []string) (bool, error) {
+	for _, pattern := range patterns {
+		matched, err := filepath.Match(pattern, fileName)
+		if err != nil {
+			return false, err
+		}
+
+		if matched {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func printUpdatedFile(path, projectName string) {
+	fmt.Printf("updated path: %s - change go-template with %s\n", path, projectName)
 }
