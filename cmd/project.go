@@ -14,7 +14,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const repoURL string = "https://github.com/MihaiBlebea/go-template"
+// https://oauth-key-goes-here@github.com/username/repo.git
+const repoName string = "MihaiBlebea/go-template"
 
 var projectName string
 
@@ -38,7 +39,7 @@ var projectCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if !mute {
 			// Print output to confirm
-			fmt.Printf("1. Clone template repo %s\n", repoURL)
+			fmt.Printf("1. Clone template repo %s\n", repoName)
 			fmt.Printf("2. Replace \"go-template\" package with \"%s\"\n", projectName)
 
 			confirm, err := askConfirm()
@@ -53,6 +54,12 @@ var projectCmd = &cobra.Command{
 			}
 		}
 
+		// Validate GITHUB_TOKEN is set as env variable
+		token := os.Getenv("GITHUB_TOKEN")
+		if token == "" {
+			return errors.New("GITHUB_TOKEN env variable is not set")
+		}
+
 		err := validateProjectName(projectName)
 		if err != nil {
 			return err
@@ -63,7 +70,7 @@ var projectCmd = &cobra.Command{
 		res := exec.Command(
 			"git",
 			"clone",
-			repoURL,
+			fmt.Sprintf("https://%s@github.com/%s.git", token, repoName),
 			folderPath,
 		)
 		err = res.Run()
