@@ -8,6 +8,8 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/fatih/color"
+	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
 )
 
@@ -36,13 +38,14 @@ var templates embed.FS
 var modelName string
 
 func init() {
-	rootCmd.AddCommand(startCmd)
+	rootCmd.AddCommand(modelCmd)
 
-	startCmd.Flags().StringVarP(&modelName, "name", "n", "", "Model name")
+	modelCmd.Flags().StringVarP(&modelName, "name", "n", "", "Model name")
+	modelCmd.Flags().BoolVarP(&mute, "mute", "m", false, "Mute command output")
 }
 
-var startCmd = &cobra.Command{
-	Use:   "gen",
+var modelCmd = &cobra.Command{
+	Use:   "model",
 	Short: "Generate a model & repository.",
 	Long:  "Generate a model & repository.",
 	Args: func(cmd *cobra.Command, args []string) error {
@@ -90,6 +93,38 @@ var startCmd = &cobra.Command{
 			RepoVarName:  fmt.Sprintf("%sRepo", strings.ToLower(modelName)),
 			Fields:       fields,
 			ExtraFields:  addExtraFields(fields),
+		}
+
+		if !mute {
+			// Print output to confirm
+			fmt.Printf("1. Create model %s\n", data.ModelName)
+			fmt.Printf("2. Create repo %s\n", data.RepoName)
+			fmt.Println("")
+
+			// Print the model fields
+			headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
+			columnFmt := color.New(color.FgYellow).SprintfFunc()
+
+			tbl := table.New("#", "Name", "Type", "JSON")
+			tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+
+			for i, f := range data.ExtraFields {
+				tbl.AddRow(i+1, f.Title, f.FieldType, f.DBTitle)
+			}
+
+			tbl.Print()
+			fmt.Println("")
+
+			confirm, err := askConfirm()
+			if err != nil {
+				return err
+			}
+
+			if !confirm {
+				fmt.Println("Terminating...")
+
+				return nil
+			}
 		}
 
 		err = createFile("model", fmt.Sprintf("./%s/%s.go", modelName, modelName), data)
@@ -208,16 +243,6 @@ func RenderFuncParams(params []ModelField) (render string) {
 	}
 
 	return render
-}
-
-func contains(list []string, needle string) bool {
-	for _, el := range list {
-		if el == needle {
-			return true
-		}
-	}
-
-	return false
 }
 
 func addExtraFields(fields []ModelField) []ModelField {

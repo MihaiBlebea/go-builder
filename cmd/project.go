@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/fatih/color"
+	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
 )
 
@@ -16,10 +18,13 @@ const repoURL string = "https://github.com/MihaiBlebea/go-template"
 
 var projectName string
 
+var updatedFiles = make([]string, 0)
+
 func init() {
 	rootCmd.AddCommand(projectCmd)
 
 	projectCmd.Flags().StringVarP(&projectName, "name", "n", "", "Project name")
+	projectCmd.Flags().BoolVarP(&mute, "mute", "m", false, "Mute command output")
 }
 
 var projectCmd = &cobra.Command{
@@ -31,6 +36,23 @@ var projectCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if !mute {
+			// Print output to confirm
+			fmt.Printf("1. Clone template repo %s\n", repoURL)
+			fmt.Printf("2. Replace \"go-template\" package with \"%s\"\n", projectName)
+
+			confirm, err := askConfirm()
+			if err != nil {
+				return err
+			}
+
+			if !confirm {
+				fmt.Println("Terminating...")
+
+				return nil
+			}
+		}
+
 		err := validateProjectName(projectName)
 		if err != nil {
 			return err
@@ -52,6 +74,21 @@ var projectCmd = &cobra.Command{
 		// Go over each file and update go-template into go-project name
 		if err := filepath.Walk(folderPath, visit); err != nil {
 			return err
+		}
+
+		// Print table with updated files
+		if !mute {
+			headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
+			columnFmt := color.New(color.FgYellow).SprintfFunc()
+
+			tbl := table.New("#", "File", "Updated")
+			tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+
+			for i, f := range updatedFiles {
+				tbl.AddRow(i+1, f, "\xE2\x9C\x94")
+			}
+
+			tbl.Print()
 		}
 
 		return nil
@@ -95,8 +132,7 @@ func visit(path string, fi os.FileInfo, err error) error {
 			return err
 		}
 
-		// Print updated path
-		printUpdatedFile(path, projectName)
+		updatedFiles = append(updatedFiles, path)
 
 		newContents := strings.Replace(string(read), "go-template", projectName, -1)
 
@@ -122,8 +158,4 @@ func matchFilePatterns(fileName string, patterns []string) (bool, error) {
 	}
 
 	return false, nil
-}
-
-func printUpdatedFile(path, projectName string) {
-	fmt.Printf("updated path: %s - change go-template with %s\n", path, projectName)
 }
