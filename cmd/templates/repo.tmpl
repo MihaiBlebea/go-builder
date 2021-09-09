@@ -36,3 +36,11 @@ func (r *{{ .RepoName }}) WithID(id int) (*{{ .ModelName }}, error) {
 func (r *{{ .RepoName }}) Store({{ .ModelVarName }} *{{ .ModelName }}) error {
 	return r.conn.Create({{ .ModelVarName }}).Error
 }
+
+func (r *{{ .RepoName }}) Update({{ .ModelVarName }} *{{ .ModelName }}) error {
+	return r.conn.Save({{ .ModelVarName }}).Error
+}
+
+func (r *{{ .RepoName }}) Delete({{ .ModelVarName }} *{{ .ModelName }}) error {
+	return r.conn.Delete({{ .ModelVarName }}).Error
+}

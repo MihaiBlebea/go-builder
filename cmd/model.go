@@ -30,7 +30,7 @@ type Data struct {
 	ExtraFields  []ModelField
 }
 
-var fieldTypes = []string{"string", "int", "time.Time"}
+var fieldTypes = []string{"string", "int", "bool", "time.Time"}
 
 //go:embed templates/*
 var templates embed.FS
@@ -80,11 +80,6 @@ var modelCmd = &cobra.Command{
 			return errors.New("model name should not contain empty spaces")
 		}
 
-		err = createOrSkipFolder(fmt.Sprintf("./%s", modelName))
-		if err != nil {
-			return err
-		}
-
 		data := Data{
 			PackageName:  strings.ToLower(modelName),
 			ModelName:    strings.Title(modelName),
@@ -125,6 +120,10 @@ var modelCmd = &cobra.Command{
 
 				return nil
 			}
+		}
+
+		if err := createOrSkipFolder(fmt.Sprintf("./%s", modelName)); err != nil {
+			return err
 		}
 
 		err = createFile("model", fmt.Sprintf("./%s/%s.go", modelName, modelName), data)
