@@ -83,6 +83,16 @@ var projectCmd = &cobra.Command{
 			return err
 		}
 
+		// clone the .env.example to .env file
+		if err := cloneEnvFile(folderPath); err != nil {
+			return err
+		}
+
+		// remove the .git
+		if err := removeGit(folderPath); err != nil {
+			return err
+		}
+
 		// Print table with updated files
 		if !mute {
 			headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
@@ -165,4 +175,22 @@ func matchFilePatterns(fileName string, patterns []string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+func cloneEnvFile(folderPath string) error {
+	input, err := ioutil.ReadFile(fmt.Sprintf("%s/.env.example", folderPath))
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(fmt.Sprintf("%s/.env", folderPath), input, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func removeGit(folderPath string) error {
+	return os.Remove(fmt.Sprintf("%s/.env.example", folderPath))
 }

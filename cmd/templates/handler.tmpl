@@ -7,13 +7,13 @@ import (
 )
 
 type {{ .HandlerName }}Request struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	{{ range $field := .RequestArguments }}
+	{{- $field.Title }} {{ $field.FieldType }} `json:"{{ $field.DBTitle }}"`
+	{{ end -}}
 }
 
 type {{ .HandlerName }}Response struct {
 	ID      int    `json:"id,omitempty"`
-	Token   string `json:"token"`
 	Success bool   `json:"success"`
 	Message string `json:"message,omitempty"`
 }
@@ -26,14 +26,11 @@ func {{ .HandlerName }}Handler(s Service) http.Handler {
 		if err != nil {
 			return &request, err
 		}
-
-		if request.Email == "" {
-			return &request, errors.New("invalid request param email")
+		{{ range $field := .RequestArguments }}
+		if request.{{ $field.Title }} == {{ if eq $field.FieldType "int" -}} 0 {{- else -}} "" {{- end }} {
+			return &request, errors.New("invalid request param {{ $field.DBTitle }}")
 		}
-
-		if request.Password == "" {
-			return &request, errors.New("invalid request param password")
-		}
+		{{ end }}
 
 		return &request, nil
 	}
